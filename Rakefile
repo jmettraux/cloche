@@ -3,18 +3,21 @@ task :default => [ :compile ]
 
 task :compile do
 
-  sh "erlc -o lib src/*.erl"
-  sh "erlc -o test test/*.erl"
+  FileUtils.mkdir('ebin') unless File.exist?('ebin')
+
+  sh 'erlc -o ebin src/*.erl'
+  sh 'erlc -o test test/*.erl'
 end
 
 task :clean do
 
-  sh "rm lib/*.beam"
-  sh "rm test/*.beam"
+  FileUtils.rm_rf('ebin')
+  FileUtils.rm_rf('work_test')
+  Dir['test/*.beam'].each { |beam| FileUtils.rm(beam) }
 end
 
 task :test => [ :clean, :compile ] do
 
-  sh "erl -noshell -pa lib -pa test -s cloche_test test -s init stop"
+  sh "erl -noshell -pa ebin -pa test -s cloche_test test -s init stop"
 end
 
