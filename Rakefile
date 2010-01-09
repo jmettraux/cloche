@@ -13,3 +13,8 @@ task :clean do
   sh "rm test/*.beam"
 end
 
+task :test => [ :clean, :compile ] do
+
+  sh "erl -noshell -pa lib -pa test -s cloche_test test -s init stop"
+end
+
