@@ -29,7 +29,7 @@ rpc(Pid, Request) ->
 extract_tir(Doc) ->
   { cloche_utils:json_get(Doc, "type"),
     cloche_utils:json_get(Doc, "_id"),
-    cloche_utils:json_get(Doc, "_rev") }.
+    cloche_utils:json_get_int(Doc, "_rev") }.
 
 get_file(Path) ->
   case file:read_file(Path) of
@@ -50,10 +50,9 @@ write_doc(TypePath, DocPath, Doc) ->
   file:write_file(DocPath, Doc).
 
 inc_rev(Doc, undefined) ->
-  inc_rev(Doc, "-1");
+  inc_rev(Doc, -1);
 inc_rev(Doc, Rev) ->
-  NewRev = integer_to_list(list_to_integer(Rev) + 1),
-  cloche_utils:json_set(Doc, "_rev", NewRev).
+  cloche_utils:json_set(Doc, "_rev", integer_to_list(Rev + 1)).
 
 %
 % playing the role of a lock
@@ -74,8 +73,9 @@ file_loop(Registry, Dir, Type, Id) ->
 
     { From, do_put, Doc, Rev } ->
       { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
+      %From ! { CurrentRev, Rev },
       if
-        CurrentRev =:= Rev ->
+        CurrentRev == Rev ->
           write_doc(TypePath, DocPath, inc_rev(Doc, Rev)),
           From ! ok;
         true ->

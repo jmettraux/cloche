@@ -2,8 +2,6 @@
 -module(cloche_test).
 -include_lib("eunit/include/eunit.hrl").
 
-%write_test_() ->
-
 read_test_() ->
   { setup,
     fun() ->
@@ -24,4 +22,28 @@ generate_read_tests(Pid) ->
     ?_assertEqual(
       undefined,
       cloche:do_get(Pid, "person", "nemo")) ].
+
+write_test_() ->
+  { setup,
+    fun() ->
+      Pid = cloche:start("work_test"),
+      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
+      Pid
+    end,
+    fun(Pid) ->
+      cloche:shutdown(Pid),
+      cloche_utils:clear_dir("work_test")
+    end,
+    fun generate_write_tests/1 }.
+
+generate_write_tests(Pid) ->
+  [ ?_assertEqual(
+      ok,
+      cloche:do_put(Pid, "{\"_id\":\"jeff\",\"type\":\"person\"}")),
+    ?_assertEqual(
+      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}",
+      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\"}")),
+    ?_assertEqual(
+      ok,
+      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}")) ].
 

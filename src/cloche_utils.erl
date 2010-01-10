@@ -1,7 +1,7 @@
 
 -module(cloche_utils).
 -export([clear_dir/1]).
--export([json_get/2, json_set/3]).
+-export([json_get/2, json_get_int/2, json_set/3]).
 
 clear_files(Dir, [ Filename | Filenames ]) ->
   Fn = filename:join([ Dir, Filename ]),
@@ -35,9 +35,8 @@ clear_dir(Dir) ->
 % sooner or later, replace with ejson or mochijson
 %
 
-json_get(JsonString, Key) ->
+json_get(JsonString, { ok, Re }) ->
 
-  { ok, Re } = re:compile("\"?" ++ Key ++ "\"? *: *\"([^\"]+)"),
   % TODO : multiline aware
 
   case re:run(JsonString, Re) of
@@ -45,6 +44,15 @@ json_get(JsonString, Key) ->
       [{ Start, Length }] = Cdr,
       string:substr(JsonString, Start+1, Length);
     _ -> undefined
+  end;
+
+json_get(JsonString, Key) ->
+  json_get(JsonString, re:compile("\"?" ++ Key ++ "\"? *: *\"([^\"]+)")).
+
+json_get_int(JsonString, Key) ->
+  case json_get(JsonString, re:compile("\"?" ++ Key ++ "\"? *: *([^,}]+)")) of
+    undefined -> undefined;
+    S -> list_to_integer(S)
   end.
 
 json_set(JsonString, Key, Value) ->

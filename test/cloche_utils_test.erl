@@ -20,11 +20,17 @@ generate_clear_dir_tests(_) ->
 
 json_get_test_() ->
   [ ?_assertEqual(
-    "toto", cloche_utils:json_get("{\"_id\":\"toto\"}", "_id")),
+      "toto", cloche_utils:json_get("{\"_id\":\"toto\"}", "_id")),
     ?_assertEqual(
-    "toto", cloche_utils:json_get("{_id:\"toto\"}", "_id")),
+      "toto", cloche_utils:json_get("{_id:\"toto\"}", "_id")),
     ?_assertEqual(
-    undefined, cloche_utils:json_get("{_id:\"toto\"}", "colour")) ].
+      undefined, cloche_utils:json_get("{_id:\"toto\"}", "colour")) ].
+
+json_get_int_test_() ->
+  [ ?_assertEqual(
+      undefined, cloche_utils:json_get_int("{\"_id\":\"toto\",\"type\":\"person\"}", "_rev")),
+    ?_assertEqual(
+      2, cloche_utils:json_get_int("{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}", "_rev")) ].
 
 json_set_test_() ->
   [ ?_assertEqual(
