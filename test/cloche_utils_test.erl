@@ -26,3 +26,14 @@ json_get_test_() ->
     ?_assertEqual(
     undefined, cloche_utils:json_get("{_id:\"toto\"}", "colour")) ].
 
+json_set_test_() ->
+  [ ?_assertEqual(
+      "{\"_id\":\"toto\",\"_rev\":2}",
+      cloche_utils:json_set("{\"_id\":\"toto\"}", "_rev", "2")),
+    ?_assertEqual(
+      "{\"_id\":\"toto\",\"_rev\":2}",
+      cloche_utils:json_set("{\"_id\":\"toto\",\"_rev\":0}", "_rev", "2")),
+    ?_assertEqual(
+      "{\"_id\":\"toto\",\"_rev\":2}",
+      cloche_utils:json_set("{\"_id\":\"toto\",_rev:0}", "_rev", "2")) ].
+

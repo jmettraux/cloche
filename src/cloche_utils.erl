@@ -1,7 +1,7 @@
 
 -module(cloche_utils).
 -export([clear_dir/1]).
--export([json_get/2]).
+-export([json_get/2, json_set/3]).
 
 clear_files(Dir, [ Filename | Filenames ]) ->
   Fn = filename:join([ Dir, Filename ]),
@@ -45,5 +45,17 @@ json_get(JsonString, Key) ->
       [{ Start, Length }] = Cdr,
       string:substr(JsonString, Start+1, Length);
     _ -> undefined
+  end.
+
+json_set(JsonString, Key, Value) ->
+
+  KeyVal = "\"" ++ Key ++ "\":" ++ Value,
+  { ok, Re } = re:compile("\"?" ++ Key ++ "\"? *: *[^,\\}]+"),
+
+  case re:run(JsonString, Re) of
+    { match, _ } ->
+      re:replace(JsonString, Re, KeyVal, [ { return, list } ]);
+    _ ->
+      string:substr(JsonString, 1, length(JsonString) - 1) ++ "," ++ KeyVal ++ "}"
   end.
 
