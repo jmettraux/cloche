@@ -19,7 +19,7 @@ read_test_() ->
 
 generate_read_tests(Pid) ->
   [ ?_assertEqual(
-      <<"{\"_id\":\"toto\",\"type\":\"person\"}">>,
+      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
       cloche:do_get(Pid, "person", "toto")),
     ?_assertEqual(
       undefined,

@@ -27,15 +27,18 @@ rpc(Pid, Request) ->
   end.
 
 extract_tir(Doc) ->
-  { json_value(Doc, "type"), json_value(Doc, "_id"), json_value(Doc, "_rev") }.
+  { cloche_utils:json_get(Doc, "type"),
+    cloche_utils:json_get(Doc, "_id"),
+    cloche_utils:json_get(Doc, "_rev") }.
 
 get_file(Path) ->
   case file:read_file(Path) of
-    { ok, Doc } ->
+    { ok, Data } ->
+      Doc = binary_to_list(Data),
       { Type, Id, Rev } = extract_tir(Doc),
       { Type, Id, Rev, Doc };
     _ ->
-      undefined
+      { undefined, undefined, undefined, undefined }
   end.
 
 get_path(Dir, Type, Id) ->
@@ -46,11 +49,18 @@ write_doc(TypePath, DocPath, Doc) ->
   file:make_dir(TypePath),
   file:write_file(DocPath, Doc).
 
+inc_rev(Doc, undefined) ->
+  inc_rev(Doc, "-1");
+inc_rev(Doc, Rev) ->
+  NewRev = integer_to_list(list_to_integer(Rev) + 1),
+  cloche_utils:json_set(Doc, "_rev", NewRev).
 
 %
 % playing the role of a lock
 %
 file_loop(Registry, Dir, Type, Id) ->
+
+  { TypePath, DocPath } = get_path(Dir, Type, Id),
 
   receive
 
@@ -58,26 +68,23 @@ file_loop(Registry, Dir, Type, Id) ->
       file_loop(Registry, Dir, Type, Id);
 
     { From, do_get } ->
-      case get_file(Path) of
-        { _, _, _, Doc } -> From ! Doc;
-        _ -> From ! undefined
-      end,
+      { _, _, _, Doc } = get_file(DocPath),
+      From ! Doc,
       file_loop(Registry, Dir, Type, Id);
 
     { From, do_put, Doc, Rev } ->
-      { TypePath, DocPath } = get_path(Dir, Type, Id),
-      CurrentRev = case get_file(DocPath) of
-        { _, _, R, _ } -> R,
-        _ -> undefined
-      end,
+      { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
       if
         CurrentRev =:= Rev ->
+          write_doc(TypePath, DocPath, inc_rev(Doc, Rev)),
+          From ! ok;
         true ->
+          From ! CurrentDoc
       end,
       file_loop(Registry, Dir, Type, Id);
 
     { From, do_delete, Rev } ->
-      R = file:delete(Path),
+      R = file:delete(DocPath),
       From ! R,
       file_loop(Registry, Dir, Type, Id)
 

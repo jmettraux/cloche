@@ -5,8 +5,8 @@ task :compile do
 
   FileUtils.mkdir('ebin') unless File.exist?('ebin')
 
-  #sh 'erlc -o ebin src/*.erl'
-  sh 'erlc -o ebin src/cloche_utils.erl'
+  sh 'erlc -o ebin src/*.erl'
+  #sh 'erlc -o ebin src/cloche_utils.erl'
 
   sh 'erlc -o test test/*.erl'
 end
@@ -21,6 +21,6 @@ end
 task :test => [ :clean, :compile ] do
 
   sh "erl -noshell -pa ebin -pa test -s cloche_utils_test test -s init stop"
-  #sh "erl -noshell -pa ebin -pa test -s cloche_test test -s init stop"
+  sh "erl -noshell -pa ebin -pa test -s cloche_test test -s init stop"
 end
 
