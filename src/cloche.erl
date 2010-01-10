@@ -54,10 +54,7 @@ file_loop(Registry, Dir, Type, Id) ->
     { From, delete } ->
       R = file:delete(Path),
       From ! R,
-      file_loop(Registry, Dir, Type, Id);
-
-    shutdown ->
-      ok
+      file_loop(Registry, Dir, Type, Id)
 
   after 2000 ->
     Registry ! { delf, Type, Id }
@@ -85,7 +82,10 @@ file_registry_loop(Dir) ->
 
     { delf, Type, Id } ->
       erase({ Type, Id }),
-      file_registry_loop(Dir)
+      file_registry_loop(Dir);
+
+    shutdown ->
+      ok
   end.
 
 start(Dir) ->
