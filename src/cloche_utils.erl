@@ -1,6 +1,7 @@
 
 -module(cloche_utils).
 -export([clear_dir/1]).
+-export([json_get/2]).
 
 clear_files(Dir, [ Filename | Filenames ]) ->
   Fn = filename:join([ Dir, Filename ]),
@@ -26,4 +27,23 @@ clear_dir(Dir) ->
   end,
   %io:format("deleting dir ~p~n", [ Dir ]).
   file:del_dir(Dir).
+
+
+%
+% JSON micro stuff
+%
+% sooner or later, replace with ejson or mochijson
+%
+
+json_get(JsonString, Key) ->
+
+  { ok, Re } = re:compile("\"?" ++ Key ++ "\"? *: *\"([^\"]+)"),
+  % TODO : multiline aware
+
+  case re:run(JsonString, Re) of
+    { match, [ _ | Cdr ] } ->
+      [{ Start, Length }] = Cdr,
+      string:substr(JsonString, Start+1, Length);
+    _ -> undefined
+  end.
 

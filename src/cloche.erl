@@ -1,20 +1,24 @@
 
 -module(cloche).
 -export([start/1, shutdown/1]).
--export([read/3, write/2, delete/3]).
+-export([do_get/3, do_put/2, do_delete/2, do_delete/4]).
 
-read(Registry, Type, Id) ->
+do_get(Registry, Type, Id) ->
   F = rpc(Registry, { self(), getf, Type, Id }),
-  rpc(F, { self(), read }).
+  rpc(F, { self(), do_get }).
 
-write(Registry, Doc) ->
-  { Type, Id } = extract_type_and_id(Doc),
+do_put(Registry, Doc) ->
+  { Type, Id, Rev } = extract_tir(Doc),
   F = rpc(Registry, { self(), getf, Type, Id }),
-  rpc(F, { self(), write, Doc }).
+  rpc(F, { self(), do_put, Doc, Rev }).
 
-delete(Registry, Type, Id) ->
+do_delete(Registry, Doc) ->
+  { Type, Id, Rev } = extract_tir(Doc),
+  do_delete(Registry, Type, Id, Rev).
+
+do_delete(Registry, Type, Id, Rev) ->
   F = rpc(Registry, { self(), getf, Type, Id }),
-  rpc(F, { self(), delete }).
+  rpc(F, { self(), do_delete, Rev }).
 
 rpc(Pid, Request) ->
   Pid ! Request,
@@ -22,36 +26,57 @@ rpc(Pid, Request) ->
     Response -> Response
   end.
 
-extract_type_and_id(Doc) ->
-  { json_value(Doc, "type"), json_value(Doc, "_id") }.
+extract_tir(Doc) ->
+  { json_value(Doc, "type"), json_value(Doc, "_id"), json_value(Doc, "_rev") }.
+
+get_file(Path) ->
+  case file:read_file(Path) of
+    { ok, Doc } ->
+      { Type, Id, Rev } = extract_tir(Doc),
+      { Type, Id, Rev, Doc };
+    _ ->
+      undefined
+  end.
+
+get_path(Dir, Type, Id) ->
+  { filename:join([ Dir, Type ]),
+    filename:join([ Dir, Type, Id ++ ".json" ]) }.
+
+write_doc(TypePath, DocPath, Doc) ->
+  file:make_dir(TypePath),
+  file:write_file(DocPath, Doc).
+
 
 %
 % playing the role of a lock
 %
 file_loop(Registry, Dir, Type, Id) ->
 
-  TypeDir = filename:join([ Dir, Type ]),
-  Path = filename:join([ Dir, Type, Id ++ ".json" ]),
-
   receive
 
     { touch } ->
       file_loop(Registry, Dir, Type, Id);
 
-    { From, read } ->
-      case file:read_file(Path) of
-        { ok, Doc } -> From ! Doc;
+    { From, do_get } ->
+      case get_file(Path) of
+        { _, _, _, Doc } -> From ! Doc;
         _ -> From ! undefined
       end,
       file_loop(Registry, Dir, Type, Id);
 
-    { From, write, Doc } ->
-      file:make_dir(TypeDir),
-      R = file:write_file(Path, Doc),
-      From ! R,
+    { From, do_put, Doc, Rev } ->
+      { TypePath, DocPath } = get_path(Dir, Type, Id),
+      CurrentRev = case get_file(DocPath) of
+        { _, _, R, _ } -> R,
+        _ -> undefined
+      end,
+      if
+        CurrentRev =:= Rev ->
+        true ->
+      end,
       file_loop(Registry, Dir, Type, Id);
 
-    { From, delete } ->
+    { From, do_delete, Rev } ->
       R = file:delete(Path),
       From ! R,
       file_loop(Registry, Dir, Type, Id)
@@ -94,16 +119,4 @@ start(Dir) ->
 
 shutdown(Pid) ->
   Pid ! shutdown.
-
-%
-% Extracts the value for a 
-%
-json_value(JsonString, Key) ->
-
-  { ok, Re } = re:compile("\"?" ++ Key ++ "\"? *: *\"([^\"]+)"),
-  % TODO : multiline aware
-
-  { match, [ _ | Cdr ] } = re:run(JsonString, Re),
-  [{ Start, Length }] = Cdr,
-  string:substr(JsonString, Start+1, Length).
 
