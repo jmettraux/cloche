@@ -26,9 +26,12 @@ generate_read_tests(Pid) ->
 write_test_() ->
   { setup,
     fun() ->
-      Pid = cloche:start("work_test"),
-      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
-      Pid
+      file:make_dir("work_test"),
+      file:make_dir("work_test/person"),
+      file:write_file(
+        "work_test/person/toto.json",
+        "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
+      cloche:start("work_test")
     end,
     fun(Pid) ->
       cloche:shutdown(Pid),
@@ -38,6 +41,9 @@ write_test_() ->
 
 generate_write_tests(Pid) ->
   [ ?_assertEqual(
+      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}",
+      cloche:do_get(Pid, "person", "toto")),
+    ?_assertEqual(
       ok,
       cloche:do_put(Pid, "{\"_id\":\"jeff\",\"type\":\"person\"}")),
     ?_assertEqual(
