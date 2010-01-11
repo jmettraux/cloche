@@ -1,4 +1,5 @@
 
 [o] move json_value to cloche_utils
 [ ] split by type ? (one file registry per type)
+[ ] conditional GET
 

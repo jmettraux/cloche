@@ -1,17 +1,16 @@
 
--module(cloche_server).
+-module(cloche_http).
 
--export([start/2, stop/0]).
+-export([start/3, stop/1]).
 
-start(Port, ClocheDir) ->
-  Cloche = cloche:start(ClocheDir),
+start(Name, Port, Cloche) ->
   mochiweb_http:start([
+    { name, Name },
     { port, Port },
     { loop, fun(Req) -> handle(Req:get(method), Req, Cloche) end } ]).
 
-stop() ->
-  % TODO : stop the cloche...
-  mochiweb_http:stop().
+stop(Name) ->
+  mochiweb_http:stop(Name).
 
 %handle(Req) ->
 %  handle(Req:get(method), Req).
