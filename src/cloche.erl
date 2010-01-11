@@ -57,19 +57,19 @@ inc_rev(Doc, Rev) ->
 %
 % playing the role of a lock
 %
-file_loop(Registry, Dir, Type, Id) ->
+file_loop(Cloche, Dir, Type, Id) ->
 
   { TypePath, DocPath } = get_path(Dir, Type, Id),
 
   receive
 
     { touch } ->
-      file_loop(Registry, Dir, Type, Id);
+      file_loop(Cloche, Dir, Type, Id);
 
     { From, do_get } ->
       { _, _, _, Doc } = get_file(DocPath),
       From ! Doc,
-      file_loop(Registry, Dir, Type, Id);
+      file_loop(Cloche, Dir, Type, Id);
 
     { From, do_put, Doc, Rev } ->
       { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
@@ -81,15 +81,15 @@ file_loop(Registry, Dir, Type, Id) ->
         true ->
           From ! CurrentDoc
       end,
-      file_loop(Registry, Dir, Type, Id);
+      file_loop(Cloche, Dir, Type, Id);
 
     { From, do_delete, Rev } ->
       R = file:delete(DocPath),
       From ! R,
-      file_loop(Registry, Dir, Type, Id)
+      file_loop(Cloche, Dir, Type, Id)
 
   after 2000 ->
-    Registry ! { delf, Type, Id }
+    over
   end.
 
 %
@@ -107,13 +107,16 @@ file_registry_loop(Dir) ->
           put({ Type, Id }, Pid),
           From ! Pid;
         Pid ->
-          Pid ! { touch },
-          From ! Pid
+          case erlang:is_process_alive(Pid) of
+            true ->
+              Pid ! { touch },
+              From ! Pid;
+            false ->
+              NewPid = spawn(fun() -> file_loop(self(), Dir, Type, Id) end),
+              put({ Type, Id }, NewPid),
+              From ! NewPid
+          end
       end,
-      file_registry_loop(Dir);
-
-    { delf, Type, Id } ->
-      erase({ Type, Id }),
       file_registry_loop(Dir);
 
     shutdown ->
