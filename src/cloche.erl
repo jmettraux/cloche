@@ -3,21 +3,21 @@
 -export([start/1, shutdown/1]).
 -export([do_get/3, do_put/2, do_delete/2, do_delete/4]).
 
-do_get(Registry, Type, Id) ->
-  F = rpc(Registry, { self(), getf, Type, Id }),
+do_get(Cloche, Type, Id) ->
+  F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_get }).
 
-do_put(Registry, Doc) ->
+do_put(Cloche, Doc) ->
   { Type, Id, Rev } = extract_tir(Doc),
-  F = rpc(Registry, { self(), getf, Type, Id }),
+  F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_put, Doc, Rev }).
 
-do_delete(Registry, Doc) ->
+do_delete(Cloche, Doc) ->
   { Type, Id, Rev } = extract_tir(Doc),
-  do_delete(Registry, Type, Id, Rev).
+  do_delete(Cloche, Type, Id, Rev).
 
-do_delete(Registry, Type, Id, Rev) ->
-  F = rpc(Registry, { self(), getf, Type, Id }),
+do_delete(Cloche, Type, Id, Rev) ->
+  F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_delete, Rev }).
 
 rpc(Pid, Request) ->
