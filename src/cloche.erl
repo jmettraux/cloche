@@ -73,7 +73,6 @@ file_loop(Cloche, Dir, Type, Id) ->
 
     { From, do_put, Doc, Rev } ->
       { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
-      %From ! { CurrentRev, Rev },
       if
         CurrentRev == Rev ->
           write_doc(TypePath, DocPath, inc_rev(Doc, Rev)),
@@ -84,8 +83,16 @@ file_loop(Cloche, Dir, Type, Id) ->
       file_loop(Cloche, Dir, Type, Id);
 
     { From, do_delete, Rev } ->
-      R = file:delete(DocPath),
-      From ! R,
+      { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
+      if
+        CurrentDoc == undefined ->
+          From ! ok;
+        CurrentRev == Rev ->
+          R = file:delete(DocPath),
+          From ! R; % ok or { error, ... }
+        true ->
+          From ! CurrentDoc
+      end,
       file_loop(Cloche, Dir, Type, Id)
 
   after 2000 ->

@@ -53,3 +53,30 @@ generate_write_tests(Pid) ->
       ok,
       cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}")) ].
 
+delete_test_() ->
+  { setup,
+    fun() ->
+      Pid = cloche:start("work_test"),
+      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\"}"),
+      Pid
+    end,
+    fun(Pid) ->
+      cloche:shutdown(Pid),
+      cloche_utils:clear_dir("work_test")
+    end,
+    fun generate_delete_tests/1 }.
+
+generate_delete_tests(Pid) ->
+  [ ?_assertEqual(
+      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
+      cloche:do_get(Pid, "person", "toto")),
+    ?_assertEqual(
+      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
+      cloche:do_delete(Pid, "person", "toto", 1)),
+    ?_assertEqual(
+      ok,
+      cloche:do_delete(Pid, "person", "toto", 0)),
+    ?_assertEqual(
+      ok,
+      cloche:do_delete(Pid, "person", "nemo", 0)) ].
+
