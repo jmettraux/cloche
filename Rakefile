@@ -24,3 +24,8 @@ task :test => [ :clean, :compile ] do
   sh "erl -noshell -pa ebin -pa test -s cloche_test test -s init stop"
 end
 
+task :rtest => [ :clean, :compile ] do
+
+  require 'test/test.rb'
+end
+
