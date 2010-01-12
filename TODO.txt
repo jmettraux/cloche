@@ -6,4 +6,5 @@
 [ ] IP white-listing
 [ ] file_loop : cache doc ?
 [ ] get_many
+[ ] DELETE /person (clear type)
 

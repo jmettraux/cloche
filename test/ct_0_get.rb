@@ -6,6 +6,7 @@
 #
 
 require 'test/unit'
+require 'fileutils'
 
 require 'rubygems'
 
@@ -18,6 +19,10 @@ class GetTest < Test::Unit::TestCase
 
   def setup
     @h = Rufus::Jig::Http.new('127.0.0.1', 9000)
+    FileUtils.mkdir_p('htest/person/ff')
+    File.open('htest/person/ff/jeff.json', 'wb') do |f|
+      f.write('{"_id":"jeff","type":"person","eyes":"green","_rev":2}')
+    end
   end
   def teardown
     @h.close
@@ -26,8 +31,8 @@ class GetTest < Test::Unit::TestCase
   def test_get
 
     assert_equal(
-      {"_id"=>"toto", "type"=>"json", "_rev"=>2},
-      @h.get('/person/toto'))
+      { '_id' => 'jeff', 'type' => 'person', '_rev' => 2, 'eyes' => 'green' },
+      @h.get('/person/jeff'))
   end
 end
 

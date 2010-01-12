@@ -15,10 +15,16 @@ stop(Name) ->
 
 
 handle(Req, Cloche) ->
-  handle(Req:get(method), Req, Cloche).
+  try
+    handle(Req:get(method), Req, Cloche)
+  catch
+    A:B ->
+      %io:format("error : ~p ~p~n", [ A, B ]),
+      io:format("error : ~p ~p~n~p~n", [ A, B, erlang:get_stacktrace() ]),
+      error(Req, "intercepted error")
+  end.
 
 handle('GET', Req, Cloche) ->
-  %io:format("GET ~p~n", [ Req ]),
   case re:split(Req:get(path), "\/", [ { return, list } ]) of
     [ [], Type, Id | _ ] ->
       case cloche:do_get(Cloche, Type, Id) of
@@ -26,6 +32,15 @@ handle('GET', Req, Cloche) ->
         Json -> ok(Req, Json)
       end;
     Any -> error(Req, "I don't get it : " ++ Any)
+  end;
+
+handle('PUT', Req, Cloche) ->
+  Body = binary_to_list(Req:recv_body(1024 * 1024)),
+  case cloche:do_put(Cloche, Body) of
+    ok ->
+      ok(Req);
+    Json -> 
+      ok(Req, Json)
   end.
 
 %
@@ -34,6 +49,9 @@ handle('GET', Req, Cloche) ->
 
 do_log(Req, Code) ->
   io:format("~s ~s ~p~n", [ Req:get(method), Req:get(path), Code ]).
+
+ok(Req) ->
+  ok(Req, "application/json", "{\"ok\":true}").
 
 ok(Req, Body) ->
   ok(Req, "application/json", Body).
