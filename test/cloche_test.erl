@@ -23,8 +23,9 @@ generate_read_tests(Pid) ->
       undefined,
       cloche:do_get(Pid, "person", "nemo")) ].
 
+
 write_test_() ->
-  { setup,
+  { foreach,
     fun() ->
       file:make_dir("work_test"),
       file:make_dir("work_test/person"),
@@ -37,24 +38,38 @@ write_test_() ->
       cloche:shutdown(Pid),
       cloche_utils:clear_dir("work_test")
     end,
-    fun generate_write_tests/1 }.
+    [ fun wt_write_new/1,
+      fun wt_write_with_wrong_rev/1,
+      fun wt_write/1,
+      fun wt_write2/1 ] }.
 
-generate_write_tests(Pid) ->
-  [ ?_assertEqual(
-      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}",
-      cloche:do_get(Pid, "person", "toto")),
-    ?_assertEqual(
-      ok,
-      cloche:do_put(Pid, "{\"_id\":\"jeff\",\"type\":\"person\"}")),
-    ?_assertEqual(
-      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}",
-      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\"}")),
-    ?_assertEqual(
-      ok,
-      cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}")) ].
+wt_write_new(Pid) ->
+  ?_assertEqual(
+    ok,
+    cloche:do_put(Pid, "{\"_id\":\"jeff\",\"type\":\"person\"}")).
+
+wt_write_with_wrong_rev(Pid) ->
+  ?_assertEqual(
+    "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}",
+    cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\"}")).
+
+  % there should be only one ?_assertEqual
+
+wt_write(Pid) ->
+  cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
+  ?_assertEqual(
+    { ok, <<"{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":3}">> },
+    file:read_file("work_test/person/toto.json")).
+
+wt_write2(Pid) ->
+  cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
+  ?_assertEqual(
+    "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":3}",
+    cloche:do_get(Pid, "person", "toto")).
+
 
 delete_test_() ->
-  { setup,
+  { foreach,
     fun() ->
       Pid = cloche:start("work_test"),
       cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\"}"),
@@ -64,19 +79,22 @@ delete_test_() ->
       cloche:shutdown(Pid),
       cloche_utils:clear_dir("work_test")
     end,
-    fun generate_delete_tests/1 }.
+    [ fun dt_delete_with_wrong_rev/1,
+      fun dt_delete_ok/1,
+      fun dt_delete_missing/1 ] }.
 
-generate_delete_tests(Pid) ->
-  [ ?_assertEqual(
-      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
-      cloche:do_get(Pid, "person", "toto")),
-    ?_assertEqual(
-      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
-      cloche:do_delete(Pid, "person", "toto", 1)),
-    ?_assertEqual(
-      ok,
-      cloche:do_delete(Pid, "person", "toto", 0)),
-    ?_assertEqual(
-      ok,
-      cloche:do_delete(Pid, "person", "nemo", 0)) ].
+dt_delete_with_wrong_rev(Pid) ->
+  ?_assertEqual(
+    "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
+    cloche:do_delete(Pid, "person", "toto", 1)).
+
+dt_delete_ok(Pid) ->
+  ?_assertEqual(
+    ok,
+    cloche:do_delete(Pid, "person", "toto", 0)).
+
+dt_delete_missing(Pid) ->
+  ?_assertEqual(
+    ok,
+    cloche:do_delete(Pid, "person", "nemo", 0)).
 
