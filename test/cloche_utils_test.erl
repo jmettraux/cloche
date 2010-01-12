@@ -7,7 +7,8 @@ clear_dir_test_() ->
     fun() ->
       file:make_dir("cu_test"),
       file:make_dir("cu_test/person"),
-      file:write_file("cu_test/person/nada.json", "nada"),
+      file:make_dir("cu_test/person/na"),
+      file:write_file("cu_test/person/na/nada.json", "nada"),
       cloche_utils:clear_dir("cu_test/person")
     end,
     fun(_) ->
