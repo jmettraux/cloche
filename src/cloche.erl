@@ -3,6 +3,11 @@
 -export([start/1, shutdown/1]).
 -export([do_get/3, do_put/2, do_delete/2, do_delete/4]).
 
+
+%
+% exported methods
+%
+
 do_get(Cloche, Type, Id) ->
   F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_get }).
@@ -19,6 +24,18 @@ do_delete(Cloche, Doc) ->
 do_delete(Cloche, Type, Id, Rev) ->
   F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_delete, Rev }).
+
+start(Dir) ->
+  file:make_dir(Dir),
+  spawn(fun() -> file_registry_loop(Dir) end).
+
+shutdown(Pid) ->
+  Pid ! shutdown.
+
+
+%
+% the rest
+%
 
 rpc(Pid, Request) ->
   Pid ! Request,
@@ -41,12 +58,23 @@ get_file(Path) ->
       { undefined, undefined, undefined, undefined }
   end.
 
-get_path(Dir, Type, Id) ->
-  { filename:join([ Dir, Type ]),
-    filename:join([ Dir, Type, Id ++ ".json" ]) }.
+last_two_chars(Id) ->
+  if
+    length(Id) > 1 ->
+      string:sub_string(Id, length(Id) - 1);
+    true ->
+      string:right(Id, 2, "Z")
+  end.
 
-write_doc(TypePath, DocPath, Doc) ->
+get_path(Dir, Type, Id) ->
+  TypePath = filename:join([ Dir, Type ]),
+  IdPath = filename:join([ TypePath, last_two_chars(Id) ]),
+  DocPath = filename:join([ IdPath, Id ++ ".json" ]),
+  { TypePath, IdPath, DocPath }.
+
+write_doc(TypePath, IdPath, DocPath, Doc) ->
   file:make_dir(TypePath),
+  file:make_dir(IdPath),
   file:write_file(DocPath, Doc).
 
 inc_rev(Doc, undefined) ->
@@ -59,7 +87,7 @@ inc_rev(Doc, Rev) ->
 %
 file_loop(Cloche, Dir, Type, Id) ->
 
-  { TypePath, DocPath } = get_path(Dir, Type, Id),
+  { TypePath, IdPath, DocPath } = get_path(Dir, Type, Id),
 
   receive
 
@@ -75,7 +103,7 @@ file_loop(Cloche, Dir, Type, Id) ->
       { _, _, CurrentRev, CurrentDoc } = get_file(DocPath),
       if
         CurrentRev == Rev ->
-          write_doc(TypePath, DocPath, inc_rev(Doc, Rev)),
+          write_doc(TypePath, IdPath, DocPath, inc_rev(Doc, Rev)),
           From ! ok;
         true ->
           From ! CurrentDoc
@@ -129,11 +157,4 @@ file_registry_loop(Dir) ->
     shutdown ->
       ok
   end.
-
-start(Dir) ->
-  file:make_dir(Dir),
-  spawn(fun() -> file_registry_loop(Dir) end).
-
-shutdown(Pid) ->
-  Pid ! shutdown.
 

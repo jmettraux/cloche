@@ -29,14 +29,18 @@ write_test_() ->
     fun() ->
       file:make_dir("work_test"),
       file:make_dir("work_test/person"),
+      file:make_dir("work_test/person/to"),
       file:write_file(
-        "work_test/person/toto.json",
+        "work_test/person/to/toto.json",
         "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
       cloche:start("work_test")
     end,
     fun(Pid) ->
       cloche:shutdown(Pid),
+      cloche_utils:clear_dir("work_test"),
       cloche_utils:clear_dir("work_test")
+        % why oh why should I have this 2 times here !
+        % of course, it's my fault
     end,
     [ fun wt_write_new/1,
       fun wt_write_with_wrong_rev/1,
@@ -59,7 +63,7 @@ wt_write(Pid) ->
   cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
   ?_assertEqual(
     { ok, <<"{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":3}">> },
-    file:read_file("work_test/person/toto.json")).
+    file:read_file("work_test/person/to/toto.json")).
 
 wt_write2(Pid) ->
   cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),

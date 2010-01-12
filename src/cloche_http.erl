@@ -33,7 +33,7 @@ handle('GET', Req, Cloche) ->
 %
 
 do_log(Req, Code) ->
-  io:format("~p ~p ~p~n", [ Req:get(method), Req:get(path), Code ]).
+  io:format("~s ~s ~p~n", [ Req:get(method), Req:get(path), Code ]).
 
 ok(Req, Body) ->
   ok(Req, "application/json", Body).

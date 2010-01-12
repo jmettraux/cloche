@@ -1,9 +1,9 @@
 
 [o] move json_value to cloche_utils
+[o] person/to/toto.json
 [ ] split by type ? (one file registry per type)
 [ ] conditional GET
 [ ] IP white-listing
 [ ] file_loop : cache doc ?
-[ ] person/to/toto.json
 [ ] get_many
 
