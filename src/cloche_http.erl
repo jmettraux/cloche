@@ -7,16 +7,12 @@ start(Name, Port, Cloche) ->
   mochiweb_http:start([
     { name, Name },
     { port, Port },
-    { loop, fun(Req) -> handle(Req, Cloche) end } ]).
+    { loop, fun(Req) -> handle(Req, Cloche) end } ]),
+  io:format("cloche_http listening on ~p~n", [ Port ]).
 
 stop(Name) ->
   mochiweb_http:stop(Name).
 
-%handle(Req) ->
-  %Req:serve_file("toto.json", ".").
-  %handle(Req:get(method), Req).
-  %io:format("===== ~p~n", [ Req:get(method) ]),
-  %Req:ok({ "text/html", "toto" }).
 
 handle(Req, Cloche) ->
   handle(Req:get(method), Req, Cloche).
@@ -27,7 +23,7 @@ handle('GET', Req, Cloche) ->
     [ [], Type, Id | _ ] ->
       case cloche:do_get(Cloche, Type, Id) of
         undefined -> not_found(Req);
-        Json -> Req:ok({ "application/json", Json })
+        Json -> ok(Req, Json)
       end;
     Any -> error(Req, "I don't get it : " ++ Any)
   end.
@@ -36,9 +32,21 @@ handle('GET', Req, Cloche) ->
 % helpers
 %
 
+do_log(Req, Code) ->
+  io:format("~p ~p ~p~n", [ Req:get(method), Req:get(path), Code ]).
+
+ok(Req, Body) ->
+  ok(Req, "application/json", Body).
+
+ok(Req, ContentType, Body) ->
+  do_log(Req, 200),
+  Req:respond({ 200, [{ "Content-Type", ContentType }], Body }).
+
 not_found(Req) ->
+  do_log(Req, 404),
   Req:respond({ 404, [{ "Content-Type", "text/plain" }], "not found." }).
 
 error(Req, Msg) ->
+  do_log(Req, 500),
   Req:respond({ 500, [{ "Content-Type", "text/plain" }], "error : " ++ Msg }).
 
