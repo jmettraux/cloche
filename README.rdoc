@@ -3,3 +3,5 @@
 
 an Erlang experiment.
 
+(playing with erland, eunit and mochiweb)
+
