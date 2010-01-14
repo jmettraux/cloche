@@ -13,10 +13,14 @@ start(Name, Port, Cloche) ->
 stop(Name) ->
   mochiweb_http:stop(Name).
 
+%
+% handle
+%
 
 handle(Req, Cloche) ->
   try
-    handle(Req:get(method), Req, Cloche)
+    [ _ | Path ] = re:split(Req:get(path), "\/", [ { return, list } ]),
+    handle(Req:get(method), Path, Req, Cloche)
   catch
     A:B ->
       %io:format("error : ~p ~p~n", [ A, B ]),
@@ -24,24 +28,40 @@ handle(Req, Cloche) ->
       error(Req, "intercepted error")
   end.
 
-handle('GET', Req, Cloche) ->
-  case re:split(Req:get(path), "\/", [ { return, list } ]) of
-    [ [], Type, Id | _ ] ->
-      case cloche:do_get(Cloche, Type, Id) of
-        undefined -> not_found(Req);
-        Json -> ok(Req, Json)
-      end;
-    Any -> error(Req, "I don't get it : " ++ Any)
+%
+% GET
+%
+
+handle('GET', [ Type, Id | _ ], Req, Cloche) ->
+  case cloche:do_get(Cloche, Type, Id) of
+    undefined -> not_found(Req);
+    Json -> ok(Req, Json)
   end;
 
-handle('PUT', Req, Cloche) ->
+%
+% PUT
+%
+
+handle('PUT', _, Req, Cloche) ->
   Body = binary_to_list(Req:recv_body(1024 * 1024)),
   case cloche:do_put(Cloche, Body) of
     ok ->
       ok(Req);
     Json -> 
       ok(Req, Json)
-  end.
+  end;
+
+%
+% DELETE
+%
+
+%
+% catchall
+%
+
+handle(M, P, Req, _) ->
+  % TODO : use something like io:format
+  error(Req, "not implemented : " ++ M ++ " " ++ P).
 
 %
 % helpers
