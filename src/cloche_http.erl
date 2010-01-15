@@ -55,6 +55,10 @@ handle('PUT', _, Req, Cloche) ->
 % DELETE
 %
 
+handle('DELETE', [ Type ], Req, Cloche) ->
+  cloche:clear_type(Cloche, Type),
+  ok(Req);
+
 %
 % catchall
 %

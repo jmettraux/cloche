@@ -2,6 +2,7 @@
 -module(cloche).
 -export([start/1, shutdown/1]).
 -export([do_get/3, do_put/2, do_delete/2, do_delete/4]).
+-export([clear_type/2]).
 
 
 %
@@ -24,6 +25,9 @@ do_delete(Cloche, Doc) ->
 do_delete(Cloche, Type, Id, Rev) ->
   F = rpc(Cloche, { self(), getf, Type, Id }),
   rpc(F, { self(), do_delete, Rev }).
+
+clear_type(Cloche, Type) ->
+  rpc(Cloche, { self(), delt, Type }).
 
 start(Dir) ->
   file:make_dir(Dir),
@@ -152,6 +156,11 @@ file_registry_loop(Dir) ->
               From ! NewPid
           end
       end,
+      file_registry_loop(Dir);
+
+    { From, delt, Type } ->
+      cloche_utils:clear_dir(filename:join([ Dir, Type ])),
+      From ! ok,
       file_registry_loop(Dir);
 
     shutdown ->
