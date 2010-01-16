@@ -23,6 +23,7 @@ class DeleteTest < Test::Unit::TestCase
       '/person/jami',
       { '_id' => 'jami', 'type' => 'person', 'eyes' => 'blue' },
       { :content_type => :json })
+    @d = @h.get('/person/jami')
   end
   def teardown
     @h.delete('/person')
@@ -36,13 +37,43 @@ class DeleteTest < Test::Unit::TestCase
     assert_equal(false, File.exist?('htest/person/mi/jami.json'))
   end
 
-  def test_delete
+  def test_delete_missing_rev
+
+    assert_raise Rufus::Jig::HttpError do
+      @h.delete('/person/jami')
+    end
 
     assert_equal(true, File.exist?('htest/person/mi/jami.json'))
+  end
 
-    @h.delete('/person/jami')
+  def test_delete
 
-    assert_equal(false, File.exist?('htest/person/mi/jami.json'))
+    r = @h.delete('/person/jami?rev=0')
+
+    assert_equal true, r['ok']
+    assert_equal false, File.exist?('htest/person/mi/jami.json')
+  end
+
+  def test_delete_in_path
+
+    r = @h.delete('/person/jami/0')
+
+    assert_equal true, r['ok']
+    assert_equal false, File.exist?('htest/person/mi/jami.json')
+  end
+
+  def test_delete_missing
+
+    r = @h.delete('/person/john?rev=0')
+
+    assert_equal true, r['ok']
+  end
+
+  def test_delete_wrong_rev
+
+    r = @h.delete('/person/jami?rev=7')
+
+    assert_equal @d, r
   end
 end
 

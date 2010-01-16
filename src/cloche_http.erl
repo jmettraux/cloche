@@ -59,19 +59,37 @@ handle('DELETE', [ Type ], Req, Cloche) ->
   cloche:clear_type(Cloche, Type),
   ok(Req);
 
+handle('DELETE', [ Type, Id ], Req, Cloche) ->
+  case lists:keyfind("rev", 1, Req:parse_qs()) of
+    { "rev", Rev } ->
+      handle('DELETE', [ Type, Id, Rev ], Req, Cloche);
+    false ->
+      error(Req, 400, "missing rev")
+  end;
+
+handle('DELETE', [ Type, Id, Rev ], Req, Cloche) ->
+  case cloche:do_delete(Cloche, Type, Id, list_to_integer(Rev)) of
+    ok ->
+      ok(Req);
+    Json -> 
+      ok(Req, Json)
+  end;
+
 %
 % catchall
 %
 
 handle(M, P, Req, _) ->
-  error(Req, io_lib:format("not implementend : ~p ~p", [ M, P ])).
+  error(Req, io_lib:format("not implemented : ~p ~p", [ M, P ])).
 
 %
 % helpers
 %
 
 do_log(Req, Code) ->
-  io:format("~s ~s ~p~n", [ Req:get(method), Req:get(path), Code ]).
+  io:format(
+    "~s ~s ~p ~s~n",
+    [ Req:get(method), Req:get(raw_path), Code, Req:get(peer) ]).
 
 ok(Req) ->
   ok(Req, "application/json", "{\"ok\":true}").
@@ -87,7 +105,10 @@ not_found(Req) ->
   do_log(Req, 404),
   Req:respond({ 404, [{ "Content-Type", "text/plain" }], "not found." }).
 
+error(Req, Code, Msg) ->
+  do_log(Req, Code),
+  Req:respond({ Code, [{ "Content-Type", "text/plain" }], "error : " ++ Msg }).
+
 error(Req, Msg) ->
-  do_log(Req, 500),
-  Req:respond({ 500, [{ "Content-Type", "text/plain" }], "error : " ++ Msg }).
+  error(Req, 500, Msg).
 
