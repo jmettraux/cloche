@@ -29,3 +29,8 @@ task :rtest => [ :clean, :compile ] do
   require 'test/test.rb'
 end
 
+task :tserve => [ :clean, :compile ] do
+
+  sh "./start.erl 9000 htest"
+end
+
