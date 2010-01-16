@@ -19,6 +19,10 @@ class DeleteTest < Test::Unit::TestCase
 
   def setup
     @h = Rufus::Jig::Http.new('127.0.0.1', 9000)
+    @h.put(
+      '/person/jami',
+      { '_id' => 'jami', 'type' => 'person', 'eyes' => 'blue' },
+      { :content_type => :json })
   end
   def teardown
     @h.delete('/person')
@@ -27,12 +31,16 @@ class DeleteTest < Test::Unit::TestCase
 
   def test_delete_type
 
-    @h.put(
-      '/person/jami',
-      { '_id' => 'jami', 'type' => 'person', 'eyes' => 'blue' },
-      { :content_type => :json })
-
     @h.delete('/person')
+
+    assert_equal(false, File.exist?('htest/person/mi/jami.json'))
+  end
+
+  def test_delete
+
+    assert_equal(true, File.exist?('htest/person/mi/jami.json'))
+
+    @h.delete('/person/jami')
 
     assert_equal(false, File.exist?('htest/person/mi/jami.json'))
   end

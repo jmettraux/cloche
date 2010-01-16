@@ -64,8 +64,7 @@ handle('DELETE', [ Type ], Req, Cloche) ->
 %
 
 handle(M, P, Req, _) ->
-  % TODO : use something like io:format
-  error(Req, "not implemented : " ++ M ++ " " ++ P).
+  error(Req, io_lib:format("not implementend : ~p ~p", [ M, P ])).
 
 %
 % helpers
