@@ -25,6 +25,7 @@ class GetTest < Test::Unit::TestCase
     end
   end
   def teardown
+    @h.delete('/person')
     @h.close
   end
 

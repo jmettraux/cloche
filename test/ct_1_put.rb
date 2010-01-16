@@ -21,6 +21,7 @@ class PutTest < Test::Unit::TestCase
     @h = Rufus::Jig::Http.new('127.0.0.1', 9000)
   end
   def teardown
+    @h.delete('/person')
     @h.close
   end
 
