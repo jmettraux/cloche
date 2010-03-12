@@ -33,8 +33,8 @@ clear_dir(Dir) ->
 %
 % JSON micro stuff
 %
-% sooner or later, replace with ejson or mochijson
-%
+
+% get
 
 json_do_get([], _) ->
   undefined;
@@ -42,7 +42,6 @@ json_do_get([], _) ->
 json_do_get([ Entry | Rest ], Key) ->
   { K, Value } = Entry,
   Sk = binary_to_list(K),
-  io:format(" * ~p ==> ~p~n", [ Sk, Value ]),
   case Sk of
     Key -> if
       is_binary(Value) -> binary_to_list(Value);
@@ -57,15 +56,15 @@ json_do_get({ struct, Entries }, Key) ->
 json_get(JsonString, Key) ->
   json_do_get(mochijson2:decode(JsonString), Key).
 
+% set
+
+to_binary (Value) when is_list(Value) -> list_to_binary(Value);
+to_binary (Value) -> Value.
+
+
 json_set(JsonString, Key, Value) ->
-
-  KeyVal = "\"" ++ Key ++ "\":" ++ Value,
-  { ok, Re } = re:compile("\"?" ++ Key ++ "\"? *: *[^,\\}]+"),
-
-  case re:run(JsonString, Re) of
-    { match, _ } ->
-      re:replace(JsonString, Re, KeyVal, [ { return, list } ]);
-    _ ->
-      string:substr(JsonString, 1, length(JsonString) - 1) ++ "," ++ KeyVal ++ "}"
-  end.
+  { struct, E0 } = mochijson2:decode(JsonString),
+  E1 = lists:filter(fun({ K, _ }) -> binary_to_list(K) =/= Key end, E0),
+  E2 = [ { list_to_binary(Key), to_binary(Value) } | E1 ],
+  binary_to_list(iolist_to_binary(mochijson2:encode({ struct, E2 }))).
 

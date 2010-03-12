@@ -8,4 +8,5 @@
 [ ] get_many
 [ ] DELETE /person (clear type)
 [ ] longpoll, that implies a sequence count
+[ ] test with UTF-8
 

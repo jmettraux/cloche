@@ -31,18 +31,15 @@ json_get_test_() ->
 
 json_set_test_() ->
   [ ?_assertEqual(
-      "{\"_id\":\"toto\",\"_rev\":2}",
+      "{\"_rev\":\"2\",\"_id\":\"toto\"}",
       cloche_utils:json_set("{\"_id\":\"toto\"}", "_rev", "2")),
     ?_assertEqual(
-      "{\"_id\":\"toto\",\"_rev\":2}",
-      cloche_utils:json_set("{\"_id\":\"toto\",\"_rev\":0}", "_rev", "2")),
-    ?_assertEqual(
-      "{\"_id\":\"toto\",\"_rev\":2}",
-      cloche_utils:json_set("{\"_id\":\"toto\",_rev:0}", "_rev", "2")) ].
+      "{\"_rev\":2,\"_id\":\"toto\"}",
+      cloche_utils:json_set("{\"_id\":\"toto\",\"_rev\":0}", "_rev", 2)) ].
 
-%get_set_test() ->
-%  Doc0 = "{\"_id\":\"toto\",\"_rev\":2}",
-%  Doc1 = cloche_utils:json_set(
-%    Doc0, "_rev", integer_to_list(cloche_utils:json_get_int(Doc0, "_rev") + 1)),
-%  ?_assertEqual("{\"_id\":\"toto\",\"_rev\":3}", Doc1).
+get_set_test() ->
+  Doc0 = "{\"_id\":\"toto\",\"_rev\":2}",
+  Doc1 = cloche_utils:json_set(
+    Doc0, "_rev", integer_to_list(cloche_utils:json_get(Doc0, "_rev") + 1)),
+  ?_assertEqual("{\"_rev\":3,\"_id\":\"toto\"}", Doc1).
 
