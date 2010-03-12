@@ -23,17 +23,11 @@ json_get_test_() ->
   [ ?_assertEqual(
       "toto", cloche_utils:json_get("{\"_id\":\"toto\"}", "_id")),
     ?_assertEqual(
-      "toto", cloche_utils:json_get("{_id:\"toto\"}", "_id")),
+      undefined, cloche_utils:json_get("{\"_id\":\"toto\"}", "colour")),
     ?_assertEqual(
-      undefined, cloche_utils:json_get("{_id:\"toto\"}", "colour")) ].
-
-json_get_int_test_() ->
-  [ ?_assertEqual(
-      undefined, cloche_utils:json_get_int("{\"_id\":\"toto\",\"type\":\"person\"}", "_rev")),
+      undefined, cloche_utils:json_get("{\"_id\":\"toto\",\"type\":\"person\"}", "_rev")),
     ?_assertEqual(
-      2, cloche_utils:json_get_int("{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}", "_rev")),
-    ?_assertEqual(
-      3, cloche_utils:json_get_int("{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}", "_rev") + 1) ].
+      2, cloche_utils:json_get("{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}", "_rev")) ].
 
 json_set_test_() ->
   [ ?_assertEqual(
@@ -46,9 +40,9 @@ json_set_test_() ->
       "{\"_id\":\"toto\",\"_rev\":2}",
       cloche_utils:json_set("{\"_id\":\"toto\",_rev:0}", "_rev", "2")) ].
 
-get_set_test() ->
-  Doc0 = "{\"_id\":\"toto\",\"_rev\":2}",
-  Doc1 = cloche_utils:json_set(
-    Doc0, "_rev", integer_to_list(cloche_utils:json_get_int(Doc0, "_rev") + 1)),
-  ?_assertEqual("{\"_id\":\"toto\",\"_rev\":3}", Doc1).
+%get_set_test() ->
+%  Doc0 = "{\"_id\":\"toto\",\"_rev\":2}",
+%  Doc1 = cloche_utils:json_set(
+%    Doc0, "_rev", integer_to_list(cloche_utils:json_get_int(Doc0, "_rev") + 1)),
+%  ?_assertEqual("{\"_id\":\"toto\",\"_rev\":3}", Doc1).
 

@@ -1,7 +1,7 @@
 
 -module(cloche_utils).
 -export([clear_dir/1]).
--export([json_get/2, json_get_int/2, json_set/3]).
+-export([json_get/2, json_set/3]).
 
 clear_files(Dir, [ Filename | Filenames ]) ->
   Fn = filename:join([ Dir, Filename ]),
@@ -36,25 +36,26 @@ clear_dir(Dir) ->
 % sooner or later, replace with ejson or mochijson
 %
 
-json_get(JsonString, { ok, Re }) ->
+json_do_get([], _) ->
+  undefined;
 
-  % TODO : multiline aware
-
-  case re:run(JsonString, Re) of
-    { match, [ _ | Cdr ] } ->
-      [{ Start, Length }] = Cdr,
-      string:substr(JsonString, Start+1, Length);
-    _ -> undefined
+json_do_get([ Entry | Rest ], Key) ->
+  { K, Value } = Entry,
+  Sk = binary_to_list(K),
+  io:format(" * ~p ==> ~p~n", [ Sk, Value ]),
+  case Sk of
+    Key -> if
+      is_binary(Value) -> binary_to_list(Value);
+      true -> Value
+    end;
+    _ -> json_do_get(Rest, Key)
   end;
 
-json_get(JsonString, Key) ->
-  json_get(JsonString, re:compile("\"?" ++ Key ++ "\"? *: *\"([^\"]+)")).
+json_do_get({ struct, Entries }, Key) ->
+  json_do_get(Entries, Key).
 
-json_get_int(JsonString, Key) ->
-  case json_get(JsonString, re:compile("\"?" ++ Key ++ "\"? *: *([^,}]+)")) of
-    undefined -> undefined;
-    S -> list_to_integer(S)
-  end.
+json_get(JsonString, Key) ->
+  json_do_get(mochijson2:decode(JsonString), Key).
 
 json_set(JsonString, Key, Value) ->
 
