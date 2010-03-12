@@ -17,7 +17,7 @@ read_test_() ->
 
 generate_read_tests(Pid) ->
   [ ?_assertEqual(
-      "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
+      "{\"_rev\":0,\"_id\":\"toto\",\"type\":\"person\"}",
       cloche:do_get(Pid, "person", "toto")),
     ?_assertEqual(
       undefined,
@@ -62,13 +62,13 @@ wt_write_with_wrong_rev(Pid) ->
 wt_write(Pid) ->
   cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
   ?_assertEqual(
-    { ok, <<"{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":3}">> },
+    { ok, <<"{\"_rev\":3,\"_id\":\"toto\",\"type\":\"person\"}">> },
     file:read_file("work_test/person/to/toto.json")).
 
 wt_write2(Pid) ->
   cloche:do_put(Pid, "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":2}"),
   ?_assertEqual(
-    "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":3}",
+    "{\"_rev\":3,\"_id\":\"toto\",\"type\":\"person\"}",
     cloche:do_get(Pid, "person", "toto")).
 
 
@@ -89,7 +89,7 @@ delete_test_() ->
 
 dt_delete_with_wrong_rev(Pid) ->
   ?_assertEqual(
-    "{\"_id\":\"toto\",\"type\":\"person\",\"_rev\":0}",
+    "{\"_rev\":0,\"_id\":\"toto\",\"type\":\"person\"}",
     cloche:do_delete(Pid, "person", "toto", 1)).
 
 dt_delete_ok(Pid) ->

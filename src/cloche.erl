@@ -50,7 +50,7 @@ rpc(Pid, Request) ->
 extract_tir(Doc) ->
   { cloche_utils:json_get(Doc, "type"),
     cloche_utils:json_get(Doc, "_id"),
-    cloche_utils:json_get_int(Doc, "_rev") }.
+    cloche_utils:json_get(Doc, "_rev") }.
 
 get_file(Path) ->
   case file:read_file(Path) of
@@ -84,7 +84,7 @@ write_doc(TypePath, IdPath, DocPath, Doc) ->
 inc_rev(Doc, undefined) ->
   inc_rev(Doc, -1);
 inc_rev(Doc, Rev) ->
-  cloche_utils:json_set(Doc, "_rev", integer_to_list(Rev + 1)).
+  cloche_utils:json_set(Doc, "_rev", Rev + 1).
 
 %
 % playing the role of a lock
