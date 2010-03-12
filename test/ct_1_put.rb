@@ -25,7 +25,7 @@ class PutTest < Test::Unit::TestCase
     @h.close
   end
 
-  def test_put
+  def test_put_new
 
     r = @h.put(
       '/person/jami',
@@ -35,8 +35,16 @@ class PutTest < Test::Unit::TestCase
     assert_equal 200, r.status
 
     assert_equal(
-      "{\"_id\":\"jami\",\"type\":\"person\",\"eyes\":\"blue\",\"_rev\":0}",
-      File.read('htest/person/mi/jami.json'))
+      { "_id" => "jami", "type" => "person", "eyes" => "blue", "_rev" => 0 },
+      Rufus::Json.decode(File.read('htest/person/mi/jami.json')))
+  end
+
+  def test_put_wrong_rev
+    flunk
+  end
+
+  def test_put
+    flunk
   end
 end
 

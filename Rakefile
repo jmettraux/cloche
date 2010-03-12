@@ -20,8 +20,8 @@ end
 
 task :test => [ :clean, :compile ] do
 
-  sh "erl -noshell -pa ebin -pa test -s cloche_utils_test test -s init stop"
-  sh "erl -noshell -pa ebin -pa test -s cloche_test test -s init stop"
+  sh 'erl -noshell -pa ebin -pa test -s cloche_utils_test test -s init stop'
+  sh 'erl -noshell -pa ebin -pa test -s cloche_test test -s init stop'
 end
 
 task :rtest => [ :clean, :compile ] do
@@ -31,6 +31,6 @@ end
 
 task :tserve => [ :clean, :compile ] do
 
-  sh "./start.erl 9000 htest"
+  sh './start.erl 9000 htest'
 end
 
